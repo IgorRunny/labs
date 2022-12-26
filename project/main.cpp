@@ -3,37 +3,30 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include<math.h>
-double PI = acos(-1);
+#include <string>
+#include "ball.hpp"
+#include "platform.hpp"
 
-void Angle(int& angle)
-{
-    angle += 30;
-    if (angle >= 360)
-    {
-        angle -= 360;
-    }
-}
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
-    sf::CircleShape shape(20);
-    shape.setFillColor(sf::Color::Red);
-    shape.setPosition(10, 600);
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "Project");
     sf::Clock timer;
-    shape.setOrigin(20, 20);
-    sf::Vector2i defPos = sf::Vector2i(425, 900);
-    sf::Mouse::setPosition(defPos, window);
-    sf::RectangleShape platform(sf::Vector2f(150,10));
-    platform.setFillColor(sf::Color(0, 166, 147));
-    platform.setPosition(sf::Vector2f(defPos));
-    platform.setOrigin(platform.getSize().x / 2, platform.getSize().y / 2);
-    double speed = 0.5;
-    int angle = 30;
-    double x = 100;
-    double y = 600;
-    shape.setPosition(x, y);
+    int count1 = 0;
+    int count2 = 0;
+    sf::Font font;
+    font.loadFromFile("arial.ttf");
+    sf::Text Count;
+    Count.setFont(font);
+    Count.setOrigin(Count.getScale().x / 2, Count.getScale().y / 2);
+    Count.setCharacterSize(50);
+    Count.setPosition(500, 500);
+    Count.setStyle(sf::Text::Bold);
+    Count.setColor(sf::Color::White);
+    std::vector <ib::platform> Platforms;
+    Platforms.push_back(ib::platform(200, 15, sf::Vector2f(500, 850), 0, 255, 0));
+    Platforms.push_back(ib::platform(200, 15, sf::Vector2f(500, 150), 0, 0, 255));
+    ib::ball Ball(30, sf::Vector2f(500, 500), 255,0,0);
     
     
     
@@ -43,55 +36,91 @@ int main()
     {
         sf::Event event;
         sf::Time dt = timer.restart();
-        std::cout << dt.asMicroseconds() << "\n";
-        x += speed  * cosf(angle * PI / 180);
-        y += speed * sinf(angle * PI / 180);
-        shape.setPosition(x, y);
-        if (sf::Mouse::getPosition(window).x < 0)
+        Count.setString(std::to_string(count1) + ":" + std::to_string(count2));
+        Ball.move();
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
         {
-            sf::Mouse::setPosition(sf::Vector2i(0, sf::Mouse::getPosition(window).y), window);
+            Platforms[0].moveright();
         }
-        if (sf::Mouse::getPosition(window).x > 1000)
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
         {
-            sf::Mouse::setPosition(sf::Vector2i(1000, sf::Mouse::getPosition(window).y), window);
+            Platforms[0].moveleft();
         }
-        if (sf::Mouse::getPosition(window).x != defPos.x)
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
         {
-            platform.setPosition(sf::Mouse::getPosition(window).x, platform.getPosition().y);
+            Platforms[1].moveright();
         }
-        std::cout << platform.getPosition().x << "   " << shape.getPosition().x << "\n";
-        if (x + shape.getRadius() >= 1000)
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
         {
-            Angle(angle);
+            Platforms[1].moveleft();
         }
-        if (x - shape.getRadius() <= 0)
+
+        if (Platforms[0].getpos().x + Platforms[0].getsizex() / 2 >= 1000)
         {
-            Angle(angle);
+            Platforms[0].setpos(1000 - Platforms[0].getsizex() / 2);
         }
-        if (y + shape.getRadius() >= 1000)
+        if (Platforms[0].getpos().x - Platforms[0].getsizex() / 2 <= 0)
         {
-            Angle(angle);
+            Platforms[0].setpos(0 + Platforms[0].getsizex() / 2);
         }
-        if (y - shape.getRadius() <= 0)
+
+        if (Platforms[1].getpos().x + Platforms[1].getsizex() / 2 >= 1000)
         {
-            Angle(angle);
+            Platforms[1].setpos(1000 - Platforms[1].getsizex() / 2);
         }
-        if ((x + shape.getRadius() >= platform.getPosition().x - platform.getSize().x / 2) && (x + shape.getRadius() <= platform.getPosition().x + platform.getSize().x / 2) && (y + shape.getRadius() >= platform.getPosition().y + platform.getSize().y / 2))
+        if (Platforms[1].getpos().x - Platforms[1].getsizex() / 2 <= 0)
         {
-            angle += 60;
+            Platforms[1].setpos(0 + Platforms[1].getsizex() / 2);
         }
+
+        if (Ball.getpos().x + Ball.getrad() >= 1000)
+        {
+            Ball.collisionX();
+        }
+        if (Ball.getpos().x - Ball.getrad() <= 0)
+        {
+            Ball.collisionX();
+        }
+        if (Ball.getpos().y + Ball.getrad() >= 1000)
+        {
+            Ball.collisionY();
+            count2 += 1;
+        }
+        if (Ball.getpos().y - Ball.getrad() <= 0)
+        {
+            Ball.collisionY();
+            count1 += 1;
+        }
+        std::cout << Ball.getpos().y << "\n";
+        
+        if (Ball.getpos().x + Ball.getrad() >= Platforms[0].getpos().x - Platforms[0].getsizex() / 2 && Ball.getpos().x - Ball.getrad() <= Platforms[0].getpos().x + Platforms[0].getsizex() / 2 && Ball.getpos().y + Ball.getrad() >= Platforms[0].getpos().y)
+        {
+            Ball.collisionY();
+        }
+        if (Ball.getpos().x + Ball.getrad() >= Platforms[1].getpos().x - Platforms[1].getsizex() / 2 && Ball.getpos().x + Ball.getrad() <= Platforms[1].getpos().x + Platforms[1].getsizex() / 2 && Ball.getpos().y - Ball.getrad() <= Platforms[1].getpos().y)
+        {
+            Ball.collisionY();
+        }
+
         while (window.pollEvent(event))
         {
+
            
             if (event.type == sf::Event::Closed)
                 window.close();
         }
         window.clear();
-        window.draw(platform);
-        window.draw(shape);
+        window.draw(*Platforms[0].get());
+        window.draw(*Platforms[1].get());
+        window.draw(*Ball.get());
+        window.draw(Count);
         window.display();
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1) / 10);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+    Platforms[0].~platform();
+    Platforms[1].~platform();
+    Ball.~ball();
 
     return 0;
 }
